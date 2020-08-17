@@ -1,0 +1,57 @@
+{{!
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+}}
+<h1>Tables</h1>
+{{#error}}
+  <div class="text-error">{{.}}</div>
+{{/error}}
+{{#redirect_error}}
+  <div class="text-error">{{.}}</div>
+{{/redirect_error}}
+{{#leader_redirect}}
+  <div>You can find this page on the <a href="{{{.}}}">leader master's web UI</a>.</div>
+{{/leader_redirect}}
+{{^error}}
+There are {{num_tables}} tables.
+<table data-toggle="table" class="table table-striped">
+  <thead><tr>
+    <th data-sorter="stringsSorter" data-sortable="true">Table Name</th>
+    <th>Table Id</th>
+    <th>State</th>
+    <th>State Message</th>
+    <th data-sorter="numericStringsSorter" data-sortable="true">Tablet Count</th>
+    <th data-sorter="bytesSorter" data-sortable="true">On-Disk Size (leaders only)</th>
+    <th data-sorter="timesSorter" data-sortable="true">Create Time</th>
+    <th data-sorter="timesSorter" data-sortable="true">Last Alter Time</th>
+  </tr></thead>
+  <tbody>
+   {{#tables}}
+    <tr>
+      <td>{{name}}</td>
+      <td><a href="{{base_url}}/table?id={{id}}">{{id}}</a></td>
+      <td>{{state}}</td>
+      <td>{{message}}</td>
+      <td>{{tablet_count}}</td>
+      <td>{{on_disk_size}}</td>
+      <td>{{create_time}}</td>
+      <td>{{alter_time}}</td>
+    </tr>
+   {{/tables}}
+  </tbody>
+</table>
+{{/error}}

@@ -1,0 +1,95 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+syntax = "proto2";
+package kudu.ranger;
+option java_package = "org.apache.kudu.ranger";
+
+// In Ranger an action is an operation taken on an
+// authorizable, an authorizable is a linear hierarchically structured
+// resource (database -> table -> column), and 'privileges' are composed
+// of an authorizable and an action, e.g. CREATE ON DATABASE a (db=a).
+
+// SQL-like action types are used in Ranger. All actions are independent,
+// except that ALL subsumes every other action, and every action subsumes
+// METADATA.
+
+// In term of privilege evaluation Ranger doesn't have the concept of hierarchical
+// implication. To be more specific, privilege 'METADATA ON DATABASE a (db=a)'
+// does not imply 'METADATA ON TABLE a.tbl (db=a->table=tbl)'. Thus, in Ranger
+// users granted with 'METADATA ON DATABASE a' cannot perform an action that
+// requires 'METADATA ON TABLE a.tbl'. On the other hand, Ranger supports
+// wildcard matching on authorizables, e.g. 'db=a->table=*' matches all the
+// tables that belong to DATABASE a.
+
+// For the detailed privilege enforcement information see 'Policy for
+// Kudu Masters/Tablet Servers' section in docs/security.adoc.
+
+enum ActionPB {
+  SELECT = 0;
+  INSERT = 1;
+  UPDATE = 2;
+  DELETE = 3;
+  ALTER = 4;
+  CREATE = 5;
+  DROP = 6;
+  ALL = 7;
+  METADATA = 8;
+}
+
+// The following protobuf definitions are used as interface between
+// Kudu master and the Ranger authorization plugin operating in a
+// Java subprocess that is managed by the Kudu master.
+
+// Describes a single Ranger authorization request per user.
+message RangerRequestPB {
+  // Database name the action is to be performed on.
+  optional string database = 1;
+
+  // Table name the action is to be performed on.
+  optional string table = 2;
+
+  // Column name the action is to be performed on.
+  optional string column = 3;
+
+  // Action to be authorized on the resource.
+  optional ActionPB action = 4;
+
+  // Whether delegate admin privilege is required to perform the action.
+  optional bool requires_delegate_admin = 5;
+}
+
+// Describes a single Ranger authorization response for a single user.
+message RangerResponsePB {
+  // Whether or not a request is allowed.
+  optional bool allowed = 1;
+}
+
+// Describes a list of authorization requests sent to the Ranger service
+// for a single user.
+message RangerRequestListPB {
+  repeated RangerRequestPB requests = 1;
+
+  // User performing the action.
+  optional string user = 2;
+}
+
+// Describes a list of authorization descison responded from the Ranger
+// service for a request for a single user. Note that the order of
+// responses is determined by the order of requests in RangerRequestListPB.
+message RangerResponseListPB {
+  repeated RangerResponsePB responses = 1;
+}

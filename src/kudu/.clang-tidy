@@ -1,0 +1,99 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# Explanation for why some checks are disabled (separated from the list of
+# checks as we can't inline comments).
+#
+# 'llvm-include-order'
+#
+# IWYU has specific rules for ordering '-inl.h' include files, i.e.
+# 'header.h' and its 'header-inl.h' counterpart. It seems in some cases
+# including 'header-inl.h' before 'header.h' might even lead to compilation
+# failures. So, IWYU intentionally re-orders them even if 'header-inl.h'
+# comes before 'header.h' lexicographically in default C locale:
+#   https://github.com/apache/kudu/blob/ \
+#     89ce529e945731c48445db4a6f8af11f9f905aab/build-support/iwyu/ \
+#     fix_includes.py#L1786-L1787
+#
+# That ordering contradicts with what clang-tidy recommends when using the
+# 'llvm-include-order' check.
+#
+# TODO(aserbin): clarify whether it's possible to customize clang-tidy
+#                behavior w.r.t. the sorting of such header files using
+#                the format style options described at
+#                https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+#
+# 'readability-magic-numbers'
+#
+# Although useful in production code, we use magic numbers liberally in
+# tests, and many would be net less clear as named constants.
+#
+# 'misc-non-private-member-variables-in-classes'
+#
+# There are two problems with this diagnostic in the Kudu codebase:
+# 1. structs containing nothing but public data members. Permitted by the Google
+#    Style Guide (GSG) and used liberally in Kudu. We could set
+#    IgnoreClassesWithAllMemberVariablesBeingPublic to ignore them.
+# 2. protected data members. Nominally prohibited, there's a necessary exception
+#    for test fixtures, and that is used extensively in Kudu. Unfortunately
+#    there's no way to customize that aspect of the diagnostic, so we must
+#    disable the entire thing to avoid a deluge of false positives.
+Checks: >-
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+  clang-analyzer-deadcode.DeadStores,
+  -clang-analyzer-alpha*,
+  clang-diagnostic-*,
+  google-*,
+  -google-readability-braces-around-statements,
+  hicpp-noexcept-move,
+  -llvm-include-order,
+  misc-*,
+  -misc-non-private-member-variables-in-classes,
+  -modernize-*,
+  modernize-make-shared,
+  modernize-pass-by-value,
+  modernize-shrink-to-fit,
+  modernize-use-emplace,
+  modernize-use-nullptr,
+  performance-*,
+  readability-*,
+  -readability-braces-around-statements,
+  -readability-implicit-bool-conversion,
+  -readability-magic-numbers,
+  -readability-redundant-string-init
+HeaderFilterRegex: '.*,-*.pb.h'
+CheckOptions:
+  - key:             google-runtime-references.WhiteListTypes
+    value:           ev::io
+  - key:             readability-identifier-naming.ClassCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.EnumCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.PrivateMemberSuffix
+    value:           '_'
+  - key:             readability-identifier-naming.ParameterCase
+    value:           lower_case
+  - key:             readability-identifier-naming.NamespaceCase
+    value:           lower_case
+  - key:             readability-identifier-naming.InlineNamespaceCase
+    value:           lower_case
+  - key:             readability-identifier-naming.GlobalConstantCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.GlobalConstantPrefix
+    value:           'k'
